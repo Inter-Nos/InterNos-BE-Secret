@@ -3,6 +3,7 @@ package com.internos.secret.controller;
 import com.google.cloud.storage.Storage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,6 +23,9 @@ public class HealthController {
     private final JdbcTemplate jdbcTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final Storage storage;
+    
+    @Value("${app.storage.bucket}")
+    private String bucketName;
 
     @GetMapping("/liveness")
     public ResponseEntity<Map<String, String>> liveness() {
@@ -79,8 +83,8 @@ public class HealthController {
 
     private boolean checkGcs() {
         try {
-            // Simple check - try to get storage service
-            storage.list("health-check", Storage.BlobListOption.pageSize(1));
+            // Simple check - try to list blobs in bucket (with very small page size)
+            storage.list(bucketName, Storage.BlobListOption.pageSize(1));
             return true;
         } catch (Exception e) {
             log.error("GCS health check failed", e);

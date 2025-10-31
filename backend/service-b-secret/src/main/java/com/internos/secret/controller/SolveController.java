@@ -5,16 +5,24 @@ import com.internos.secret.service.NonceService;
 import com.internos.secret.service.SolveService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequiredArgsConstructor
 public class SolveController {
 
     private final SolveService solveService;
     private final NonceService nonceService;
+    private final int nonceTtlSec;
+
+    public SolveController(SolveService solveService,
+                          NonceService nonceService,
+                          @Value("${app.solve.nonce-ttl-sec}") int nonceTtlSec) {
+        this.solveService = solveService;
+        this.nonceService = nonceService;
+        this.nonceTtlSec = nonceTtlSec;
+    }
 
     @GetMapping("/s/{id}/meta")
     public ResponseEntity<SolveMeta> getSolveMeta(@PathVariable Long id,
@@ -29,7 +37,7 @@ public class SolveController {
         String nonce = nonceService.generateNonce(roomId);
         NonceResp resp = NonceResp.builder()
                 .nonce(nonce)
-                .expiresIn(60) // SOLVE_NONCE_TTL_SEC
+                .expiresIn(nonceTtlSec)
                 .build();
         return ResponseEntity.ok(resp);
     }

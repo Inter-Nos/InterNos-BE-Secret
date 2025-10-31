@@ -102,7 +102,8 @@ public class SolveService {
             } catch (LockedException e) {
                 throw e; // Re-throw lockout exception
             }
-            throw new NotFoundException("Incorrect answer");
+            // Don't reveal that the room exists, but answer is wrong
+            throw new NotFoundException("Room not found or incorrect answer");
         }
 
         // Success - clear failure count
