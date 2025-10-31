@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres-b:
+    image: postgres:15-alpine
+    container_name: internos-postgres-b
+    environment:
+      POSTGRES_DB: secret
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_b_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: internos-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  service-b-secret:
+    build:
+      context: ../service-b-secret
+      dockerfile: Dockerfile
+    container_name: internos-service-b
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL_B: jdbc:postgresql://postgres-b:5432/secret
+      DB_USER: postgres
+      DB_PASS: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      STORAGE_BUCKET: internos-dev
+      SIGNED_URL_TTL_SEC: 300
+      SOLVE_NONCE_TTL_SEC: 60
+      LOCKOUT_FAILS: 5
+      LOCKOUT_TTL_SEC: 600
+      IP_HASH_PEPPER: change-me-in-production
+      SESSION_SECRET: change-me-in-production
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres-b:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/b/v1/health/liveness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_b_data:
+  redis_data:
+

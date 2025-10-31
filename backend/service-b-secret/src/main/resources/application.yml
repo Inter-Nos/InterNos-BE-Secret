@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: service-b-secret
+  
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  
+  datasource:
+    url: ${DB_URL_B:jdbc:postgresql://localhost:5432/secret}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+  
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /b/v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Custom configuration
+app:
+  storage:
+    bucket: ${STORAGE_BUCKET:internos-dev}
+    signed-url-ttl-sec: ${SIGNED_URL_TTL_SEC:300}
+  
+  solve:
+    nonce-ttl-sec: ${SOLVE_NONCE_TTL_SEC:60}
+  
+  lockout:
+    fails-threshold: ${LOCKOUT_FAILS:5}
+    ttl-sec: ${LOCKOUT_TTL_SEC:600}
+  
+  security:
+    ip-hash-pepper: ${IP_HASH_PEPPER:change-me-in-production}
+    session-secret: ${SESSION_SECRET:change-me-in-production}
+
