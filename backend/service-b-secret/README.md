@@ -44,10 +44,19 @@ export IP_HASH_PEPPER=change-me-in-production
 export SESSION_SECRET=change-me-in-production
 ```
 
-2. PostgreSQL 및 Redis 실행 (docker-compose 사용):
+2. PostgreSQL 및 Redis 실행 (Docker 사용):
 ```bash
 cd ../../docker
-docker-compose up -d postgres-b redis
+./run.sh
+```
+
+또는 개별적으로:
+```bash
+# PostgreSQL
+docker run -d --name internos-postgres-b -e POSTGRES_DB=secret -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:15-alpine
+
+# Redis
+docker run -d --name internos-redis -p 6379:6379 redis:7-alpine
 ```
 
 3. 애플리케이션 실행:
@@ -55,14 +64,30 @@ docker-compose up -d postgres-b redis
 ./gradlew bootRun
 ```
 
-### Docker Compose로 전체 실행
+### Docker로 전체 실행
 
 ```bash
 cd ../../docker
-docker-compose up
+./run.sh
 ```
 
 서비스는 `http://localhost:8081/b/v1`에서 실행됩니다.
+
+### Docker 이미지 직접 빌드 및 실행
+
+```bash
+cd service-b-secret
+docker build -t internos/service-b-secret:latest .
+docker run -d \
+  --name internos-service-b \
+  --network internos-network \
+  -e DB_URL_B=jdbc:postgresql://internos-postgres-b:5432/secret \
+  -e DB_USER=postgres \
+  -e DB_PASS=postgres \
+  -e REDIS_HOST=internos-redis \
+  -p 8081:8081 \
+  internos/service-b-secret:latest
+```
 
 ## API 문서
 
